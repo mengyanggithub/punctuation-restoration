@@ -18,7 +18,7 @@ def punc_restore(query):
     words = words_original_case
 
     word_pos = 0
-    sequence_len = 256
+    sequence_len = 64
     result = ""
     decode_idx = 0
     punctuation_map = {0: '', 1: '，', 2: '。', 3: '?'}
