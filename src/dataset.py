@@ -4,7 +4,7 @@ from augmentation import *
 import numpy as np
 
 
-def parse_data(file_path, tokenizer, sequence_len, token_style):
+def parse_data(file_path, tokenizer, sequence_len, token_style,lan='en'):
     """
 
     :param file_path: text file path that contains tokens and punctuations separated by tab in lines
@@ -16,7 +16,10 @@ def parse_data(file_path, tokenizer, sequence_len, token_style):
     """
     data_items = []
     with open(file_path, 'r', encoding='utf-8') as f:
-        lines = [line for line in f.read().split('\n') if line.strip()]
+        if lan == 'en':
+            lines = [line for line in f.read().split('\n') if line.strip()]
+        elif lan == 'ch':
+            lines = [line for line in f.read().split('\n')]
         idx = 0
         # loop until end of the entire text
         while idx < len(lines):
@@ -27,7 +30,11 @@ def parse_data(file_path, tokenizer, sequence_len, token_style):
             # loop until we have required sequence length
             # -1 because we will have a special end of sequence token at the end
             while len(x) < sequence_len - 1 and idx < len(lines):
-                word, punc = lines[idx].split('\t')
+                items = lines[idx].split('\t')
+                if len(items)!=2 and lan == 'ch':
+                    idx += 1
+                    break
+                word, punc = items[0],items[1]
                 tokens = tokenizer.tokenize(word)
                 # if taking these tokens exceeds sequence length we finish current sequence with padding
                 # then start next sequence from this token
@@ -59,7 +66,7 @@ def parse_data(file_path, tokenizer, sequence_len, token_style):
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, files, tokenizer, sequence_len, token_style, is_train=False, augment_rate=0.1,
-                 augment_type='substitute'):
+                 augment_type='substitute', lan='en'):
         """
 
         :param files: single file or list of text files containing tokens and punctuations separated by tab in lines
@@ -72,14 +79,15 @@ class Dataset(torch.utils.data.Dataset):
         if isinstance(files, list):
             self.data = []
             for file in files:
-                self.data += parse_data(file, tokenizer, sequence_len, token_style)
+                self.data += parse_data(file, tokenizer, sequence_len, token_style, lan)
         else:
-            self.data = parse_data(files, tokenizer, sequence_len, token_style)
+            self.data = parse_data(files, tokenizer, sequence_len, token_style, lan)
         self.sequence_len = sequence_len
         self.augment_rate = augment_rate
         self.token_style = token_style
         self.is_train = is_train
         self.augment_type = augment_type
+        self.lan = lan
 
     def __len__(self):
         return len(self.data)
