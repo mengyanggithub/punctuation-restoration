@@ -46,6 +46,7 @@ def inference():
 
     results = []
     for text in texts:
+        origin_text = text
         text = re.sub(r"[,:\-–.!;?，。！]", '', text)
         if args.language == 'en':
             words_original_case = text.split()
@@ -107,7 +108,7 @@ def inference():
                     result += words_original_case[decode_idx] + punctuation_map[y_predict[i].item()] + ' '
                 decode_idx += 1
         print('Origin text')
-        print(text)
+        print(origin_text)
         print('Punctuated text')
         print(result)
         results.append(result+"\n")
