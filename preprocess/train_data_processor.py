@@ -53,9 +53,21 @@ with open("./trans_raw.txt", "r") as r:
     valid_lines = lines[-int(len(lines)*0.2):-int(len(lines)*0.1)]
     test_lines = lines[-int(len(lines)*0.1):]
 
-    get_label_file("./trans_train.txt",train_lines)
-    get_label_file("./trans_dev.txt",valid_lines)
-    get_label_file("./trans_test.txt",test_lines)
+
+    get_label_file("./trans_train_label.txt",train_lines)
+    get_label_file("./trans_dev_label.txt",valid_lines)
+    get_label_file("./trans_test_label.txt",test_lines)
+
+    with open("./trans_train.txt", "w") as w:
+        w.writelines(train_lines)
+    
+    with open("./trans_dev.txt", "w") as w:
+        w.writelines(valid_lines)
+
+    with open("./trans_test.txt", "w") as w:
+        w.writelines(test_lines)
+    
+
 
 
 
