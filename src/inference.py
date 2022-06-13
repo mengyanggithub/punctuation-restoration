@@ -59,8 +59,8 @@ def inference():
         sequence_len = args.sequence_length
         result = ""
         decode_idx = 0
-        punctuation_map = {0: '', 1: ',', 2: '.', 3: '?'}
-        if args.language != 'en':
+        punctuation_map = {0: '', 1: '，', 2: '。', 3: '?'}
+        if args.language != 'en' and args.language != 'ch':
             punctuation_map[2] = '।'
 
         while word_pos < len(words):
@@ -106,6 +106,8 @@ def inference():
                 else:
                     result += words_original_case[decode_idx] + punctuation_map[y_predict[i].item()] + ' '
                 decode_idx += 1
+        print('Origin text')
+        print(text)
         print('Punctuated text')
         print(result)
         results.append(result+"\n")
