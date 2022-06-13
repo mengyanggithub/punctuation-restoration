@@ -42,45 +42,53 @@ def inference():
     deep_punctuation.eval()
 
     with open(args.in_file, 'r', encoding='utf-8') as f:
-        text = f.read()
-    text = re.sub(r"[,:\-–.!;?]", '', text)
-    words_original_case = text.split()
-    words = text.lower().split()
+        texts = f.readlines()
 
-    word_pos = 0
-    sequence_len = args.sequence_length
-    result = ""
-    decode_idx = 0
-    punctuation_map = {0: '', 1: ',', 2: '.', 3: '?'}
-    if args.language != 'en':
-        punctuation_map[2] = '।'
+    results = []
+    for text in texts:
+        text = re.sub(r"[,:\-–.!;?，。！]", '', text)
+        if args.language == 'en':
+            words_original_case = text.split()
+            words = text.lower().split()
+        else:
+            words_original_case = [char for char in text.strip()]
+            words = words_original_case
+        
 
-    while word_pos < len(words):
-        x = [TOKEN_IDX[token_style]['START_SEQ']]
-        y_mask = [0]
+        word_pos = 0
+        sequence_len = args.sequence_length
+        result = ""
+        decode_idx = 0
+        punctuation_map = {0: '', 1: ',', 2: '.', 3: '?'}
+        if args.language != 'en':
+            punctuation_map[2] = '।'
 
-        while len(x) < sequence_len and word_pos < len(words):
-            tokens = tokenizer.tokenize(words[word_pos])
-            if len(tokens) + len(x) >= sequence_len:
-                break
-            else:
-                for i in range(len(tokens) - 1):
-                    x.append(tokenizer.convert_tokens_to_ids(tokens[i]))
-                    y_mask.append(0)
-                x.append(tokenizer.convert_tokens_to_ids(tokens[-1]))
-                y_mask.append(1)
-                word_pos += 1
-        x.append(TOKEN_IDX[token_style]['END_SEQ'])
-        y_mask.append(0)
-        if len(x) < sequence_len:
-            x = x + [TOKEN_IDX[token_style]['PAD'] for _ in range(sequence_len - len(x))]
-            y_mask = y_mask + [0 for _ in range(sequence_len - len(y_mask))]
-        attn_mask = [1 if token != TOKEN_IDX[token_style]['PAD'] else 0 for token in x]
+        while word_pos < len(words):
+            x = [TOKEN_IDX[token_style]['START_SEQ']]
+            y_mask = [1]
 
-        x = torch.tensor(x).reshape(1,-1)
-        y_mask = torch.tensor(y_mask)
-        attn_mask = torch.tensor(attn_mask).reshape(1,-1)
-        x, attn_mask, y_mask = x.to(device), attn_mask.to(device), y_mask.to(device)
+            while len(x) < sequence_len and word_pos < len(words):
+                tokens = tokenizer.tokenize(words[word_pos])
+                if len(tokens) + len(x) >= sequence_len:
+                    break
+                else:
+                    for i in range(len(tokens) - 1):
+                        x.append(tokenizer.convert_tokens_to_ids(tokens[i]))
+                        y_mask.append(0)
+                    x.append(tokenizer.convert_tokens_to_ids(tokens[-1]))
+                    y_mask.append(1)
+                    word_pos += 1
+            x.append(TOKEN_IDX[token_style]['END_SEQ'])
+            y_mask.append(0)
+            if len(x) < sequence_len:
+                x = x + [TOKEN_IDX[token_style]['PAD'] for _ in range(sequence_len - len(x))]
+                y_mask = y_mask + [0 for _ in range(sequence_len - len(y_mask))]
+            attn_mask = [1 if token != TOKEN_IDX[token_style]['PAD'] else 0 for token in x]
+
+            x = torch.tensor(x).reshape(1,-1)
+            y_mask = torch.tensor(y_mask)
+            attn_mask = torch.tensor(attn_mask).reshape(1,-1)
+            x, attn_mask, y_mask = x.to(device), attn_mask.to(device), y_mask.to(device)
 
         with torch.no_grad():
             if args.use_crf:
@@ -91,14 +99,18 @@ def inference():
                 y_predict = deep_punctuation(x, attn_mask)
                 y_predict = y_predict.view(-1, y_predict.shape[2])
                 y_predict = torch.argmax(y_predict, dim=1).view(-1)
-        for i in range(y_mask.shape[0]):
+        for i in range(1,y_mask.shape[0]):
             if y_mask[i] == 1:
-                result += words_original_case[decode_idx] + punctuation_map[y_predict[i].item()] + ' '
+                if args.language == 'ch':
+                    result += words_original_case[decode_idx] + punctuation_map[y_predict[i].item()]
+                else:
+                    result += words_original_case[decode_idx] + punctuation_map[y_predict[i].item()] + ' '
                 decode_idx += 1
-    print('Punctuated text')
-    print(result)
+        print('Punctuated text')
+        print(result)
+        results.append(result+"\n")
     with open(args.out_file, 'w', encoding='utf-8') as f:
-        f.write(result)
+        f.writelines(results)
 
 
 if __name__ == '__main__':
