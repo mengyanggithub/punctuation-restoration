@@ -45,9 +45,9 @@ if args.language == 'english':
                            token_style=token_style, is_train=False)
     test_set = [val_set, test_set_ref, test_set_asr]
 elif args.language == 'chinese':
-    train_set = Dataset(os.path.join(args.data_path,'ch/trans_train.txt'), tokenizer=tokenizer, sequence_len=sequence_len,
+    train_set = Dataset(os.path.join(args.data_path,'ch/trans_train_label.txt'), tokenizer=tokenizer, sequence_len=sequence_len,
                         token_style=token_style, is_train=True, augment_rate=ar, augment_type=aug_type,lan='ch')
-    val_set = Dataset(os.path.join(args.data_path, 'ch/trans_dev.txt'), tokenizer=tokenizer, sequence_len=sequence_len,
+    val_set = Dataset(os.path.join(args.data_path, 'ch/trans_dev_label.txt'), tokenizer=tokenizer, sequence_len=sequence_len,
                       token_style=token_style, is_train=False,lan='ch')             
     test_set = []
 elif args.language == 'bangla':
